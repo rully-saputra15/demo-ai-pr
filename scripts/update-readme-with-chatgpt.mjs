@@ -9,6 +9,16 @@ const README_REPOSITORY_PATH = 'README.md'
 const DEFAULT_BASE_BRANCH = 'main'
 const DEFAULT_UPDATE_BRANCH_PREFIX = 'docs-readme-update'
 
+class GitHubApiError extends Error {
+  constructor({ status, endpoint, responseText }) {
+    super(`GitHub API request failed (${status}) for ${endpoint}: ${responseText}`)
+    this.name = 'GitHubApiError'
+    this.status = status
+    this.endpoint = endpoint
+    this.responseText = responseText
+  }
+}
+
 function requireEnv(name) {
   const value = process.env[name]
   if (!value) {
@@ -36,7 +46,11 @@ async function githubRequest({ token, endpoint, method = 'GET', body, allowNotFo
   const responseText = await response.text()
 
   if (!response.ok) {
-    throw new Error(`GitHub API request failed (${response.status}) for ${endpoint}: ${responseText}`)
+    throw new GitHubApiError({
+      status: response.status,
+      endpoint,
+      responseText,
+    })
   }
 
   if (!responseText) {
@@ -48,6 +62,31 @@ async function githubRequest({ token, endpoint, method = 'GET', body, allowNotFo
 
 function getBaseBranch() {
   return process.env.README_UPDATE_BASE_BRANCH || process.env.GITHUB_BASE_BRANCH || DEFAULT_BASE_BRANCH
+}
+
+function parseGitHubErrorBody(responseText) {
+  try {
+    return JSON.parse(responseText)
+  } catch {
+    return null
+  }
+}
+
+function isPullRequestPermissionError(error) {
+  if (!(error instanceof GitHubApiError)) {
+    return false
+  }
+
+  if (error.status !== 403 || !error.endpoint.endsWith('/pulls')) {
+    return false
+  }
+
+  const body = parseGitHubErrorBody(error.responseText)
+  return body?.message === 'Resource not accessible by integration'
+}
+
+function buildCompareUrl({ repository, baseBranch, branchName }) {
+  return `https://github.com/${repository}/compare/${encodeURIComponent(baseBranch)}...${encodeURIComponent(branchName)}?expand=1`
 }
 
 function normalizeText(value) {
@@ -181,6 +220,40 @@ async function createReadmePullRequest({ token, repository, baseBranch, branchNa
       base: baseBranch,
     },
   })
+}
+
+async function createReadmePullRequestWithFallback({
+  token,
+  repository,
+  baseBranch,
+  branchName,
+  latestMergedPr,
+}) {
+  try {
+    const pullRequest = await createReadmePullRequest({
+      token,
+      repository,
+      baseBranch,
+      branchName,
+      latestMergedPr,
+    })
+
+    return {
+      created: true,
+      pullRequest,
+    }
+  } catch (error) {
+    if (!isPullRequestPermissionError(error)) {
+      throw error
+    }
+
+    return {
+      created: false,
+      compareUrl: buildCompareUrl({ repository, baseBranch, branchName }),
+      reason:
+        'GitHub token can update repository contents but cannot open pull requests. Review the branch manually using the compare URL.',
+    }
+  }
 }
 
 function pickLatestMergedPr(pullRequests) {
@@ -421,7 +494,7 @@ async function main() {
   })
 
   if (!readmeUpdate.updated && !existingPullRequest) {
-    const createdPullRequest = await createReadmePullRequest({
+    const pullRequestResult = await createReadmePullRequestWithFallback({
       token,
       repository,
       baseBranch,
@@ -430,7 +503,14 @@ async function main() {
     })
 
     console.log(`README.md was already up to date on branch ${branchName}.`)
-    console.log(`Created pull request for review: ${createdPullRequest.html_url}`)
+
+    if (pullRequestResult.created) {
+      console.log(`Created pull request for review: ${pullRequestResult.pullRequest.html_url}`)
+    } else {
+      console.log(pullRequestResult.reason)
+      console.log(`Open this compare view to create the PR manually: ${pullRequestResult.compareUrl}`)
+    }
+
     return
   }
 
@@ -445,7 +525,7 @@ async function main() {
     return
   }
 
-  const createdPullRequest = await createReadmePullRequest({
+  const pullRequestResult = await createReadmePullRequestWithFallback({
     token,
     repository,
     baseBranch,
@@ -457,7 +537,13 @@ async function main() {
     console.log(`Updated README.md on branch ${branchName}.`)
   }
 
-  console.log(`Created pull request for review: ${createdPullRequest.html_url}`)
+  if (pullRequestResult.created) {
+    console.log(`Created pull request for review: ${pullRequestResult.pullRequest.html_url}`)
+    return
+  }
+
+  console.log(pullRequestResult.reason)
+  console.log(`Open this compare view to create the PR manually: ${pullRequestResult.compareUrl}`)
 }
 
 main().catch((error) => {
