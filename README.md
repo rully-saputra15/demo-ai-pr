@@ -1,25 +1,41 @@
 # automated-pr
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+A Next.js project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+---
 
 ## Latest Update
 
-### Feature: Add Dummy Page 1
+### Feature: Add New Page 3 Dashboard
 
-A new interactive delivery dashboard page has been added at the `/page1` route. This page includes:
+A new client-side project dashboard route has been added at `/page2` with these features:
 
-- Seeded project data with metrics
+- Seeded project data with typed status and sort models
 - Search, status filtering, and sorting controls
-- Summary metrics cards and project detail cards
-- Session snapshot persistence of visible projects
+- KPI cards showing completion metrics and report links
+- Session storage persistence of visible project snapshots on visibility changes
 
-For details on this feature, see [PR #5](https://github.com/rully-saputra15/demo-ai-pr/pull/5) by @rully-saputra15.
+For full details, see [PR #7](https://github.com/rully-saputra15/demo-ai-pr/pull/7) by @rully-saputra15.
+
+```mermaid
+flowchart LR
+  seed["Project seed data"]
+  controls["Search, status, and sort controls"]
+  list["Visible project list"]
+  metrics["Completion summary cards"]
+  storage["Session storage snapshot"]
+
+  seed -- "populates" --> list
+  controls -- "filters and sorts" --> list
+  list -- "drives" --> metrics
+  list -- "persists project IDs" --> storage
+```
 
 ---
 
 ## Getting Started
 
-First, run the development server:
+Start the development server:
 
 ```bash
 npm run dev
@@ -31,19 +47,19 @@ pnpm dev
 bun dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the pages by modifying files under the `app/` directory, for example `app/page.tsx` or the newly added `app/page1/page.tsx`. The app supports hot reloading and updates automatically as you edit files.
+Edit files under the `app/` directory to modify pages or add new ones, such as `app/page2/page.tsx` for the new dashboard. The app supports hot reloading.
 
 ---
 
 ## Available Scripts
 
-- `dev`: Starts the Next.js development server (`next dev`).
-- `build`: Builds the application for production (`next build`).
-- `start`: Runs the built application in production mode (`next start`).
-- `lint`: Runs ESLint to check for code quality issues (`eslint`).
-- `docs:update`: Generates a README update and opens or refreshes a review PR (`node scripts/update-readme-with-chatgpt.mjs`).
+- `dev` - Start Next.js development server (`next dev`)
+- `build` - Build the production app (`next build`)
+- `start` - Run the production app (`next start`)
+- `lint` - Run ESLint (`eslint`)
+- `docs:update` - Update README via AI-assisted script (`node scripts/update-readme-with-chatgpt.mjs`)
 
 ---
 
@@ -53,20 +69,20 @@ You can start editing the pages by modifying files under the `app/` directory, f
 - React 19.2.4
 - Tailwind CSS for styling
 - TypeScript for static typing
-- ESLint with Next.js configuration for linting
+- ESLint with Next.js configuration
 
 ---
 
 ## Learn More
 
-- [Next.js Documentation](https://nextjs.org/docs) — Comprehensive guide and API reference.
-- [Learn Next.js](https://nextjs.org/learn) — Official interactive tutorial.
-- [Tailwind CSS](https://tailwindcss.com) — Utility-first CSS framework.
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Learn Next.js](https://nextjs.org/learn)
+- [Tailwind CSS](https://tailwindcss.com)
 
 ---
 
 ## Deployment
 
-Deploy your Next.js app easily with the [Vercel platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
+Deploy easily with [Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) or follow the [Next.js deployment guide](https://nextjs.org/docs/app/building-your-application/deploying).
 
-See [Next.js Deployment Documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more info.
+---
