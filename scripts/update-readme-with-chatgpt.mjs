@@ -82,7 +82,15 @@ function isPullRequestPermissionError(error) {
   }
 
   const body = parseGitHubErrorBody(error.responseText)
-  return body?.message === 'Resource not accessible by integration'
+
+  if (typeof body?.message !== 'string') {
+    return true
+  }
+
+  return [
+    'Resource not accessible by integration',
+    'GitHub Actions is not permitted to create or approve pull requests.',
+  ].includes(body.message)
 }
 
 function buildCompareUrl({ repository, baseBranch, branchName }) {
@@ -251,7 +259,7 @@ async function createReadmePullRequestWithFallback({
       created: false,
       compareUrl: buildCompareUrl({ repository, baseBranch, branchName }),
       reason:
-        'GitHub token can update repository contents but cannot open pull requests. Review the branch manually using the compare URL.',
+        'GitHub can update repository contents but cannot open pull requests with the current token or Actions policy. Review the branch manually using the compare URL.',
     }
   }
 }
