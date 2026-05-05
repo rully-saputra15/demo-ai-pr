@@ -4,22 +4,38 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Latest Update
 
-### Feature: Add Dummy Page 1
+### Feature: Add New Page 4 Delivery Board
 
-A new interactive delivery dashboard page has been added at the `/page1` route. This page includes:
+A new interactive delivery dashboard page has been added at the `/page4` route. This page includes:
 
-- Seeded project data with metrics
-- Search, status filtering, and sorting controls
-- Summary metrics cards and project detail cards
-- Session snapshot persistence of visible projects
+- Seeded project data with project status types and date formatting
+- Search input, status filters, and sort toggle controls
+- Summary metric cards and project cards with report links
+- Session snapshot persistence to keep visible projects across page reloads
 
-For details on this feature, see [PR #5](https://github.com/rully-saputra15/demo-ai-pr/pull/5) by @rully-saputra15.
+For details on this feature, see [PR #10](https://github.com/rully-saputra15/demo-ai-pr/pull/10) by @rully-saputra15.
+
+```mermaid
+flowchart LR
+  seed["Seeded project data"]
+  controls["Search, status, and sort controls"]
+  computed["Memoized visible projects"]
+  metrics["Summary metric cards"]
+  cards["Project cards with report links"]
+  storage["Session snapshot persistence"]
+
+  seed -- "feeds" --> computed
+  controls -- "filter and sort" --> computed
+  computed -- "drives" --> metrics
+  computed -- "renders" --> cards
+  computed -- "stores IDs" --> storage
+```
 
 ---
 
 ## Getting Started
 
-First, run the development server:
+Run the development server:
 
 ```bash
 npm run dev
@@ -27,30 +43,28 @@ npm run dev
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000) to view the app in your browser.
 
-You can start editing the pages by modifying files under the `app/` directory, for example `app/page.tsx` or the newly added `app/page1/page.tsx`. The app supports hot reloading and updates automatically as you edit files.
+Edit pages inside the `app/` directory to modify the application, for example `app/page4/page.tsx` for the new delivery board page. The app supports hot reloading.
 
 ---
 
 ## Available Scripts
 
-- `dev`: Starts the Next.js development server (`next dev`).
-- `build`: Builds the application for production (`next build`).
-- `start`: Runs the built application in production mode (`next start`).
-- `lint`: Runs ESLint to check for code quality issues (`eslint`).
-- `docs:update`: Generates a README update and opens or refreshes a review PR (`node scripts/update-readme-with-chatgpt.mjs`).
+- `dev` — Runs the Next.js development server (`next dev`).
+- `build` — Builds the app for production (`next build`).
+- `start` — Starts the production server (`next start`).
+- `lint` — Runs ESLint to check code quality (`eslint`).
+- `docs:update` — Updates the README using ChatGPT (`node scripts/update-readme-with-chatgpt.mjs`).
 
 ---
 
 ## Technologies Used
 
-- [Next.js v16.2.4](https://nextjs.org)
-- React 19.2.4
+- Next.js v16.2.4
+- React 19.2.4 and React DOM 19.2.4
 - Tailwind CSS for styling
 - TypeScript for static typing
 - ESLint with Next.js configuration for linting
@@ -59,14 +73,14 @@ You can start editing the pages by modifying files under the `app/` directory, f
 
 ## Learn More
 
-- [Next.js Documentation](https://nextjs.org/docs) — Comprehensive guide and API reference.
-- [Learn Next.js](https://nextjs.org/learn) — Official interactive tutorial.
+- [Next.js Documentation](https://nextjs.org/docs) — Official docs and API reference.
 - [Tailwind CSS](https://tailwindcss.com) — Utility-first CSS framework.
+- [React](https://reactjs.org) — JavaScript library for building user interfaces.
 
 ---
 
 ## Deployment
 
-Deploy your Next.js app easily with the [Vercel platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
+Deploy your app easily with [Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
 
-See [Next.js Deployment Documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more info.
+More info: [Next.js Deployment](https://nextjs.org/docs/app/building-your-application/deploying).
