@@ -43,7 +43,7 @@ You can start editing the pages by modifying files under the `app/` directory, f
 - `build`: Builds the application for production (`next build`).
 - `start`: Runs the built application in production mode (`next start`).
 - `lint`: Runs ESLint to check for code quality issues (`eslint`).
-- `docs:update`: Updates the README documentation via a script (`node scripts/update-readme-with-chatgpt.mjs`).
+- `docs:update`: Generates a README update and opens or refreshes a review PR (`node scripts/update-readme-with-chatgpt.mjs`).
 
 ---
 

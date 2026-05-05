@@ -5,6 +5,9 @@ import process from 'node:process'
 const README_PATH = path.resolve(process.cwd(), 'README.md')
 const PACKAGE_JSON_PATH = path.resolve(process.cwd(), 'package.json')
 const GITHUB_API_URL = 'https://api.github.com'
+const README_REPOSITORY_PATH = 'README.md'
+const DEFAULT_BASE_BRANCH = 'main'
+const DEFAULT_UPDATE_BRANCH_PREFIX = 'docs-readme-update'
 
 function requireEnv(name) {
   const value = process.env[name]
@@ -14,21 +17,170 @@ function requireEnv(name) {
   return value
 }
 
-async function githubRequest({ token, endpoint }) {
+async function githubRequest({ token, endpoint, method = 'GET', body, allowNotFound = false }) {
   const response = await fetch(`${GITHUB_API_URL}${endpoint}`, {
+    method,
     headers: {
       Accept: 'application/vnd.github+json',
       Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
       'X-GitHub-Api-Version': '2022-11-28',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+
+  if (allowNotFound && response.status === 404) {
+    return null
+  }
+
+  const responseText = await response.text()
+
+  if (!response.ok) {
+    throw new Error(`GitHub API request failed (${response.status}) for ${endpoint}: ${responseText}`)
+  }
+
+  if (!responseText) {
+    return null
+  }
+
+  return JSON.parse(responseText)
+}
+
+function getBaseBranch() {
+  return process.env.README_UPDATE_BASE_BRANCH || process.env.GITHUB_BASE_BRANCH || DEFAULT_BASE_BRANCH
+}
+
+function normalizeText(value) {
+  return value.trim()
+}
+
+function sanitizeBranchSegment(value) {
+  const sanitized = value.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '')
+  return sanitized || DEFAULT_UPDATE_BRANCH_PREFIX
+}
+
+function buildDocsUpdateBranchName(latestMergedPr) {
+  const prefix = sanitizeBranchSegment(
+    process.env.README_UPDATE_BRANCH_PREFIX || DEFAULT_UPDATE_BRANCH_PREFIX,
+  )
+
+  return `${prefix}-pr-${latestMergedPr.number}`
+}
+
+function encodeFileContent(content) {
+  return Buffer.from(content, 'utf8').toString('base64')
+}
+
+function decodeFileContent(content) {
+  return Buffer.from(content.replace(/\n/g, ''), 'base64').toString('utf8')
+}
+
+function buildPullRequestTitle(latestMergedPr) {
+  return `docs: update README for #${latestMergedPr.number}`
+}
+
+function buildPullRequestBody(latestMergedPr) {
+  return [
+    'Automated README update generated from the latest merged pull request.',
+    '',
+    `Source PR: #${latestMergedPr.number} - ${latestMergedPr.title}`,
+    `Merged at: ${latestMergedPr.mergedAt}`,
+    `Author: @${latestMergedPr.author}`,
+    `Source URL: ${latestMergedPr.url}`,
+    '',
+    'Review the generated README content before merging.',
+  ].join('\n')
+}
+
+async function getReadmeFileAtRef({ token, repository, ref }) {
+  const file = await githubRequest({
+    token,
+    endpoint: `/repos/${repository}/contents/${README_REPOSITORY_PATH}?ref=${encodeURIComponent(ref)}`,
+  })
+
+  return {
+    sha: file.sha,
+    content: decodeFileContent(file.content),
+  }
+}
+
+async function ensureBranchExists({ token, repository, baseBranch, branchName }) {
+  const existingRef = await githubRequest({
+    token,
+    endpoint: `/repos/${repository}/git/ref/heads/${branchName}`,
+    allowNotFound: true,
+  })
+
+  if (existingRef) {
+    return existingRef
+  }
+
+  const baseRef = await githubRequest({
+    token,
+    endpoint: `/repos/${repository}/git/ref/heads/${baseBranch}`,
+  })
+
+  return githubRequest({
+    token,
+    endpoint: `/repos/${repository}/git/refs`,
+    method: 'POST',
+    body: {
+      ref: `refs/heads/${branchName}`,
+      sha: baseRef.object.sha,
+    },
+  })
+}
+
+async function findOpenReadmePullRequest({ token, repository, baseBranch, branchName }) {
+  const [owner] = repository.split('/')
+  const pullRequests = await githubRequest({
+    token,
+    endpoint:
+      `/repos/${repository}/pulls?state=open&base=${encodeURIComponent(baseBranch)}` +
+      `&head=${encodeURIComponent(`${owner}:${branchName}`)}&per_page=100`,
+  })
+
+  return Array.isArray(pullRequests) ? pullRequests[0] ?? null : null
+}
+
+async function updateReadmeOnBranch({ token, repository, branchName, content, latestMergedPr }) {
+  const existingReadme = await getReadmeFileAtRef({
+    token,
+    repository,
+    ref: branchName,
+  })
+
+  if (normalizeText(existingReadme.content) === normalizeText(content)) {
+    return { updated: false }
+  }
+
+  await githubRequest({
+    token,
+    endpoint: `/repos/${repository}/contents/${README_REPOSITORY_PATH}`,
+    method: 'PUT',
+    body: {
+      message: `docs: refresh README for #${latestMergedPr.number}`,
+      content: encodeFileContent(content),
+      branch: branchName,
+      sha: existingReadme.sha,
     },
   })
 
-  if (!response.ok) {
-    const body = await response.text()
-    throw new Error(`GitHub API request failed (${response.status}) for ${endpoint}: ${body}`)
-  }
+  return { updated: true }
+}
 
-  return response.json()
+async function createReadmePullRequest({ token, repository, baseBranch, branchName, latestMergedPr }) {
+  return githubRequest({
+    token,
+    endpoint: `/repos/${repository}/pulls`,
+    method: 'POST',
+    body: {
+      title: buildPullRequestTitle(latestMergedPr),
+      body: buildPullRequestBody(latestMergedPr),
+      head: branchName,
+      base: baseBranch,
+    },
+  })
 }
 
 function pickLatestMergedPr(pullRequests) {
@@ -49,15 +201,16 @@ function pickLatestMergedPr(pullRequests) {
 async function getLatestMergedPrContext() {
   const token = requireEnv('GITHUB_TOKEN')
   const repository = requireEnv('GITHUB_REPOSITORY')
+  const baseBranch = getBaseBranch()
 
   const prs = await githubRequest({
     token,
-    endpoint: `/repos/${repository}/pulls?state=closed&base=main&per_page=100`,
+    endpoint: `/repos/${repository}/pulls?state=closed&base=${encodeURIComponent(baseBranch)}&per_page=100`,
   })
 
   const latestPr = pickLatestMergedPr(prs)
   if (!latestPr) {
-    throw new Error('No merged pull request found for base branch main')
+    throw new Error(`No merged pull request found for base branch ${baseBranch}`)
   }
 
   const files = await githubRequest({
@@ -205,9 +358,12 @@ async function generateUpdatedReadme({ apiKey, model, context, latestMergedPr })
 }
 
 async function main() {
+  const token = requireEnv('GITHUB_TOKEN')
+  const repository = requireEnv('GITHUB_REPOSITORY')
   const apiKey = requireEnv('OPENAI_API_KEY')
   const model = process.env.OPENAI_MODEL || 'gpt-4.1-mini'
   const dryRun = (process.env.README_UPDATE_DRY_RUN || '').toLowerCase() === 'true'
+  const baseBranch = getBaseBranch()
 
   const latestMergedPr = await getLatestMergedPrContext()
   const context = await getProjectContext()
@@ -218,19 +374,90 @@ async function main() {
     latestMergedPr,
   })
 
-  if (updated.trim() === context.readme.trim()) {
-    console.log('README.md already up to date. No changes written.')
+  const branchName = buildDocsUpdateBranchName(latestMergedPr)
+  const baseReadme = await getReadmeFileAtRef({
+    token,
+    repository,
+    ref: baseBranch,
+  })
+  const existingPullRequest = await findOpenReadmePullRequest({
+    token,
+    repository,
+    baseBranch,
+    branchName,
+  })
+
+  if (normalizeText(updated) === normalizeText(baseReadme.content)) {
+    console.log(`Generated README already matches ${baseBranch}. No pull request created.`)
+
+    if (existingPullRequest) {
+      console.log(`Existing pull request may no longer have a diff: ${existingPullRequest.html_url}`)
+    }
+
     return
   }
 
   if (dryRun) {
     console.log('README_UPDATE_DRY_RUN=true, generated content preview:')
     console.log(updated)
+    console.log(`Would push branch: ${branchName}`)
+    console.log(`Would target base branch: ${baseBranch}`)
     return
   }
 
-  await fs.writeFile(README_PATH, updated, 'utf8')
-  console.log('README.md updated successfully.')
+  await ensureBranchExists({
+    token,
+    repository,
+    baseBranch,
+    branchName,
+  })
+
+  const readmeUpdate = await updateReadmeOnBranch({
+    token,
+    repository,
+    branchName,
+    content: updated,
+    latestMergedPr,
+  })
+
+  if (!readmeUpdate.updated && !existingPullRequest) {
+    const createdPullRequest = await createReadmePullRequest({
+      token,
+      repository,
+      baseBranch,
+      branchName,
+      latestMergedPr,
+    })
+
+    console.log(`README.md was already up to date on branch ${branchName}.`)
+    console.log(`Created pull request for review: ${createdPullRequest.html_url}`)
+    return
+  }
+
+  if (existingPullRequest) {
+    if (readmeUpdate.updated) {
+      console.log(`Updated README.md on branch ${branchName}.`)
+    } else {
+      console.log(`README.md already matched branch ${branchName}.`)
+    }
+
+    console.log(`Updated existing pull request for review: ${existingPullRequest.html_url}`)
+    return
+  }
+
+  const createdPullRequest = await createReadmePullRequest({
+    token,
+    repository,
+    baseBranch,
+    branchName,
+    latestMergedPr,
+  })
+
+  if (readmeUpdate.updated) {
+    console.log(`Updated README.md on branch ${branchName}.`)
+  }
+
+  console.log(`Created pull request for review: ${createdPullRequest.html_url}`)
 }
 
 main().catch((error) => {
