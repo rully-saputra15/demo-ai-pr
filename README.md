@@ -2,24 +2,24 @@
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+---
+
 ## Latest Update
 
-### Feature: Add Dummy Page 1
+### Feature: Add New Page 4
 
-A new interactive delivery dashboard page has been added at the `/page1` route. This page includes:
+A new page has been added at the route `/page4`.
 
-- Seeded project data with metrics
-- Search, status filtering, and sorting controls
-- Summary metrics cards and project detail cards
-- Session snapshot persistence of visible projects
+- This page introduces new content and functionality (see `app/page4/page.tsx`).
+- Adds to the expanding app navigation and user experience.
 
-For details on this feature, see [PR #5](https://github.com/rully-saputra15/demo-ai-pr/pull/5) by @rully-saputra15.
+For details, see [PR #10](https://github.com/rully-saputra15/demo-ai-pr/pull/10) by @rully-saputra15.
 
 ---
 
 ## Getting Started
 
-First, run the development server:
+To start the development server run:
 
 ```bash
 npm run dev
@@ -31,19 +31,19 @@ pnpm dev
 bun dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000) in your browser.
+Then open [http://localhost:3000](http://localhost:3000) to view the app in your browser.
 
-You can start editing the pages by modifying files under the `app/` directory, for example `app/page.tsx` or the newly added `app/page1/page.tsx`. The app supports hot reloading and updates automatically as you edit files.
+Modify source files inside the `app/` directory (e.g., `app/page.tsx` or `app/page4/page.tsx`). The app supports hot reloading for a smooth development experience.
 
 ---
 
 ## Available Scripts
 
-- `dev`: Starts the Next.js development server (`next dev`).
-- `build`: Builds the application for production (`next build`).
-- `start`: Runs the built application in production mode (`next start`).
-- `lint`: Runs ESLint to check for code quality issues (`eslint`).
-- `docs:update`: Generates a README update and opens or refreshes a review PR (`node scripts/update-readme-with-chatgpt.mjs`).
+- `dev` - Start the Next.js development server (`next dev`).
+- `build` - Build the application for production (`next build`).
+- `start` - Start the production server (`next start`).
+- `lint` - Run ESLint to analyze and report on code quality (`eslint`).
+- `docs:update` - Update README documentation using a ChatGPT-based script (`node scripts/update-readme-with-chatgpt.mjs`).
 
 ---
 
@@ -51,15 +51,15 @@ You can start editing the pages by modifying files under the `app/` directory, f
 
 - [Next.js v16.2.4](https://nextjs.org)
 - React 19.2.4
-- Tailwind CSS for styling
-- TypeScript for static typing
-- ESLint with Next.js configuration for linting
+- Tailwind CSS (v4) for styling
+- TypeScript (v5) for static type checking
+- ESLint (v9) with Next.js configuration for linting
 
 ---
 
 ## Learn More
 
-- [Next.js Documentation](https://nextjs.org/docs) — Comprehensive guide and API reference.
+- [Next.js Documentation](https://nextjs.org/docs) — Framework guides and API reference.
 - [Learn Next.js](https://nextjs.org/learn) — Official interactive tutorial.
 - [Tailwind CSS](https://tailwindcss.com) — Utility-first CSS framework.
 
@@ -67,6 +67,6 @@ You can start editing the pages by modifying files under the `app/` directory, f
 
 ## Deployment
 
-Deploy your Next.js app easily with the [Vercel platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
+Deploy your Next.js app easily using the [Vercel platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
 
-See [Next.js Deployment Documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more info.
+For more deployment options, see the [Next.js Deployment Docs](https://nextjs.org/docs/app/building-your-application/deploying).
