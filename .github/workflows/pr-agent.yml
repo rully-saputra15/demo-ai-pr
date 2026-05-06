@@ -5,17 +5,16 @@ on:
     workflows: ["Lint PR"]
     types:
         - completed
-  pull_request:
-    types: [opened, synchronize]
 jobs:
   pr_agent_job:
-    if: ${{ github.event.sender.type != 'Bot' }}
+    if: ${{ github.event.sender.type != 'Bot' && github.event.workflow_run.conclusion == 'success'}}
     runs-on: ubuntu-latest
     permissions:
       issues: write
       pull-requests: write
       contents: write
     name: Run pr agent on every pull request, respond to user comments
+    
     steps:
     - name: PR Agent action step
       uses: the-pr-agent/pr-agent@main
