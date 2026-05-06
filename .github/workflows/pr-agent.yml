@@ -1,6 +1,10 @@
 # .github/workflows/pr-agent.yml
 name: PR Agent
 on:
+  workflow_run:
+    workflows: ["Lint PR"]
+    types:
+        - completed
   pull_request:
     types: [opened, synchronize]
 jobs:

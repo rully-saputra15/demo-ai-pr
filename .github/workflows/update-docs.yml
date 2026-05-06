@@ -1,6 +1,10 @@
 name: Update Docs
 
 on:
+  workflow_run:
+    workflows: ["Lint PR"]
+    types:
+        - completed
   pull_request:
     types:
       - closed
