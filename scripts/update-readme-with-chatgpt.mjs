@@ -367,10 +367,15 @@ function extractTextFromResponsesApi(data) {
 async function generateUpdatedReadme({ apiKey, model, context, latestMergedPr }) {
   const systemPrompt = [
     'You are a technical writer for a JavaScript repository.',
-    'Rewrite and improve README documentation in clear Markdown.',
+    'Update the existing README documentation in clear Markdown.',
     'Keep content practical and concise.',
     'Do not invent commands that are not present in package.json scripts.',
     'Use the merged PR context to reflect latest changes in documentation.',
+    'Preserve the existing README structure and content unless a targeted update is required.',
+    'In the Latest Update section, keep existing PR entries instead of replacing them wholesale.',
+    'Add a new subsection for the latest merged PR, placing it before older entries.',
+    'If the latest merged PR clearly replaces or updates a feature that is already documented in an existing subsection, update that matching subsection instead of adding a duplicate one.',
+    'Limit edits to the relevant section and any directly affected references elsewhere in the README.',
     'Output only the final Markdown for README.md with no extra commentary.',
   ].join(' ')
 
@@ -395,11 +400,14 @@ async function generateUpdatedReadme({ apiKey, model, context, latestMergedPr })
     context.readme,
     '---README_END---',
     'Requirements:',
+    '- Preserve the existing README content and structure unless a specific part needs to change.',
     '- Keep a Getting Started section.',
     '- Include exactly the script commands that exist in package.json.',
     '- Keep Markdown valid and readable.',
     '- Keep links when useful.',
     '- Document changes relevant to the latest merged PR.',
+    '- In the Latest Update section, keep older PR subsections and add the newest one first.',
+    '- If the latest merged PR replaces or updates an already documented feature, update that existing subsection instead of creating a second subsection for the same feature.',
   ].join('\n')
 
   const response = await fetch('https://api.openai.com/v1/responses', {
