@@ -450,7 +450,7 @@ async function main() {
   const token = requireEnv('GITHUB_TOKEN')
   const repository = requireEnv('GITHUB_REPOSITORY')
   const apiKey = requireEnv('OPENAI_API_KEY')
-  const model = process.env.OPENAI_MODEL || 'gpt-4.1-mini'
+  const model = process.env.OPENAI_MODEL || 'gpt-5.4'
   const dryRun = (process.env.README_UPDATE_DRY_RUN || '').toLowerCase() === 'true'
   const baseBranch = getBaseBranch()
 
