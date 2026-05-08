@@ -32,6 +32,7 @@ const principles = [
 
 export default function Home() {
   console.log("home disini");
+  console.log("home disini");
   return (
     <main className="relative flex-1 overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(234,117,52,0.18),_transparent_28%),radial-gradient(circle_at_80%_20%,_rgba(62,114,84,0.18),_transparent_24%),linear-gradient(180deg,_#f8f1e5_0%,_#efe6d7_42%,_#e7dbc8_100%)] text-stone-950">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(22,22,22,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(22,22,22,0.05)_1px,transparent_1px)] bg-[size:120px_120px] opacity-40" />
