@@ -4,6 +4,17 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Latest Update
 
+### Chore: Add New Page 7
+
+A new page has been added at the `/page7` route.
+
+- Adds a new App Router page component at `app/page7/page.tsx`
+- Expands the set of example routes available in the project
+
+For details on this change, see [PR #18](https://github.com/rully-saputra15/demo-ai-pr/pull/18) by @rully-saputra15.
+
+---
+
 ### Feature: Add New Page 4 Delivery Board
 
 A new interactive delivery dashboard page has been added at the `/page4` route. This page includes:
@@ -47,7 +58,7 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the app in your browser.
 
-Edit pages inside the `app/` directory to modify the application, for example `app/page4/page.tsx` for the new delivery board page. The app supports hot reloading.
+Edit pages inside the `app/` directory to modify the application, for example `app/page4/page.tsx` for the delivery board page or `app/page7/page.tsx` for the newly added page. The app supports hot reloading.
 
 ---
 
