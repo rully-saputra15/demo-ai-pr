@@ -39,11 +39,11 @@ jobs:
       
       - name: Update README with latest merged PR context
         env:
-          OPEN_API_KEY: ${{secrets.OPENAI_KEY}}
+          OPENAI_API_KEY: ${{secrets.OPENAI_KEY}}
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           GITHUB_REPOSITORY: ${{github.repository}}
         run: pnpm run docs:update
-        
+
       - name: Commit README changes
         run: |
           if git diff --quiet README.md; then
